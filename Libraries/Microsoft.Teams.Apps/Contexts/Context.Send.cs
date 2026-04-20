@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Microsoft.Teams.Api.Activities;
+using Microsoft.Teams.Api.Entities;
 
 namespace Microsoft.Teams.Apps;
 
@@ -67,6 +68,20 @@ public partial class Context<TActivity> : IContext<TActivity>
 {
     public async Task<T> Send<T>(T activity, CancellationToken cancellationToken = default) where T : IActivity
     {
+        // Auto-populate targetedMessageInfo entity for prompt preview
+        // when the incoming activity was a targeted message (reactive flow).
+        #pragma warning disable ExperimentalTeamsTargeted
+        if (Activity.Recipient?.IsTargeted == true && Activity.Id is not null)
+        {
+            var hasEntity = activity.Entities?.Any(e => e is TargetedMessageInfoEntity) ?? false;
+            if (!hasEntity)
+            {
+                activity.Entities ??= new List<IEntity>();
+                activity.Entities.Add(new TargetedMessageInfoEntity { MessageId = Activity.Id });
+            }
+        }
+        #pragma warning restore ExperimentalTeamsTargeted
+
         var res = await Sender.Send(activity, Ref, CancellationToken);
         await OnActivitySent(res, ToActivityType<IActivity>());
         return res;

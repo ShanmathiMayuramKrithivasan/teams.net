@@ -1,5 +1,6 @@
 using Microsoft.Teams.Api;
 using Microsoft.Teams.Api.Activities;
+using Microsoft.Teams.Api.Entities;
 using Microsoft.Teams.Apps.Activities;
 using Microsoft.Teams.Apps.Extensions;
 using Microsoft.Teams.Plugins.AspNetCore.DevTools.Extensions;
@@ -116,6 +117,32 @@ teams.OnMessage(async (context, cancellationToken) =>
         
         context.Log.Info("[REPLY] Sent targeted reply");
     }
+    else if (text.Contains("preview"))
+    {
+        // PROMPT PREVIEW (reactive): The SDK auto-populates the targetedMessageInfo
+        // entity when the incoming activity is a targeted message. The reply is sent
+        // as a targeted message with a collapsible preview of the original prompt.
+        await context.Send(
+            new MessageActivity("📋 Here is the information you requested - only you can see this, with prompt preview!")
+                .WithRecipient(context.Activity.From, true),
+            cancellationToken);
+        
+        context.Log.Info("[PREVIEW] Sent targeted reply with auto-populated prompt preview");
+    }
+    else if (text.Contains("preview-proactive"))
+    {
+        // PROMPT PREVIEW (proactive): The developer manually includes the
+        // targetedMessageInfo entity with the targeted message ID.
+        var targetedMessageId = activity.Id;
+
+        await context.Send(
+            new MessageActivity("📋 Here is the proactive result - with prompt preview!")
+                .WithRecipient(context.Activity.From, true)
+                .AddEntity(new TargetedMessageInfoEntity { MessageId = targetedMessageId }),
+            cancellationToken);
+        
+        context.Log.Info("[PREVIEW-PROACTIVE] Sent targeted reply with manually attached prompt preview");
+    }
     else if (text.Contains("help"))
     {
         await context.Send(
@@ -124,7 +151,9 @@ teams.OnMessage(async (context, cancellationToken) =>
             "- `send` - Send a targeted message (only you see it)\n" +
             "- `update` - Send a message, then update it after 3 seconds\n" +
             "- `delete` - Send a message, then delete it after 3 seconds\n" +
-            "- `reply` - Get a targeted reply (threaded)\n\n" +
+            "- `reply` - Get a targeted reply (threaded)\n" +
+            "- `preview` - Reply with auto-populated prompt preview (reactive)\n" +
+            "- `preview-proactive` - Reply with manually attached prompt preview (proactive)\n\n" +
             "_Targeted messages are only visible to you, even in group chats!_", cancellationToken);
     }
     else
