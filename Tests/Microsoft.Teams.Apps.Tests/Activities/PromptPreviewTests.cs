@@ -7,6 +7,7 @@ using Microsoft.Teams.Apps.Testing.Plugins;
 
 namespace Microsoft.Teams.Apps.Tests.Activities;
 
+#pragma warning disable ExperimentalTeamsTargeted
 public class PromptPreviewTests
 {
     private readonly App _app = new();

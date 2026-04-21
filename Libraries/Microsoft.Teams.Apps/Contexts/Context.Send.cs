@@ -71,12 +71,12 @@ public partial class Context<TActivity> : IContext<TActivity>
         // Auto-populate targetedMessageInfo entity for prompt preview
         // when the incoming activity was a targeted message (reactive flow).
         #pragma warning disable ExperimentalTeamsTargeted
-        if (Activity.Recipient?.IsTargeted == true && Activity.Id is not null)
+        if (activity is MessageActivity && Activity.Recipient?.IsTargeted == true && Activity.Id is not null)
         {
             var hasEntity = activity.Entities?.Any(e => e is TargetedMessageInfoEntity) ?? false;
             if (!hasEntity)
             {
-                activity.Entities ??= new List<IEntity>();
+                activity.Entities ??= [];
                 activity.Entities.Add(new TargetedMessageInfoEntity { MessageId = Activity.Id });
             }
         }

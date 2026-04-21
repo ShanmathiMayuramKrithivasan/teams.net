@@ -4,6 +4,7 @@ using Microsoft.Teams.Api.Entities;
 
 namespace Microsoft.Teams.Api.Tests.Entities;
 
+#pragma warning disable ExperimentalTeamsTargeted
 public class TargetedMessageInfoEntityTests
 {
     [Fact]
