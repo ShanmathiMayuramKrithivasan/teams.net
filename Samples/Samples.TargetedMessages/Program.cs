@@ -1,6 +1,5 @@
 using Microsoft.Teams.Api;
 using Microsoft.Teams.Api.Activities;
-using Microsoft.Teams.Api.Entities;
 using Microsoft.Teams.Apps.Activities;
 using Microsoft.Teams.Apps.Extensions;
 using Microsoft.Teams.Plugins.AspNetCore.DevTools.Extensions;
@@ -28,23 +27,7 @@ teams.OnMessage(async (context, cancellationToken) =>
 
     context.Log.Info($"[MESSAGE] Received: {text}");
 
-    if (text.Contains("send"))
-    {
-        var members = await context.Api.Conversations.Members.GetAsync(activity.Conversation.Id, cancellationToken);
-
-        foreach (var member in members)
-        {
-            context.Log.Info($"[MEMBER] {member.Name} (ID: {member.Id})");
-
-            // SEND: Create a new targeted message
-            await context.Send(
-                new MessageActivity($"👋 {member.Name} This is a **targeted message** - only YOU can see this!")
-                    .WithRecipient(new Account() { Id = member.Id, Name = member.Name, Role = Role.User }, true), cancellationToken);
-        }
-        
-        context.Log.Info($"[SEND] Sent targeted message");
-    }
-    else if (text.Contains("update"))
+    if (text.Contains("update"))
     {
         // UPDATE: Send a targeted message, then update it after 3 seconds
         var conversationId = activity.Conversation?.Id ?? "";
@@ -110,52 +93,36 @@ teams.OnMessage(async (context, cancellationToken) =>
 
         context.Log.Info($"[DELETE] Scheduled delete in 3 seconds");
     }
-    else if (text.Contains("reply"))
+    else if (text.Contains("public"))
     {
-        // REPLY: Send a targeted reply to the user's message
-        await context.Reply(
-            new MessageActivity("💬 This is a **targeted reply** - threaded and private!")
-                .WithRecipient(context.Activity.From, true), cancellationToken);
-        
-        context.Log.Info("[REPLY] Sent targeted reply");
-    }
-    else if (text.Contains("preview-proactive"))
-    {
-        // PROMPT PREVIEW (proactive): The developer manually includes the
-        // targetedMessageInfo entity with the targeted message ID.
-        var targetedMessageId = activity.Id;
-
+        // PUBLIC: Send a public message with prompt preview.
+        // Everyone in the chat sees the reply with a collapsible preview of the original prompt.
         await context.Send(
-            new MessageActivity("📋 Here is the proactive result - with prompt preview!")
-                .WithRecipient(context.Activity.From, true)
-                .AddEntity(new TargetedMessageInfoEntity { MessageId = targetedMessageId }),
+            new MessageActivity("📋 Here is the public result - everyone can see this, with prompt preview!"),
             cancellationToken);
         
-        context.Log.Info("[PREVIEW-PROACTIVE] Sent targeted reply with manually attached prompt preview");
+        context.Log.Info("[PUBLIC] Sent public message with prompt preview");
     }
-    else if (text.Contains("preview"))
+    else if (text.Contains("send"))
     {
-        // PROMPT PREVIEW (reactive): The SDK auto-populates the targetedMessageInfo
-        // entity when the incoming activity is a targeted message. The reply is sent
-        // as a targeted message with a collapsible preview of the original prompt.
+        // SEND: Send a targeted message to the user. The SDK auto-populates
+        // the targetedMessageInfo entity for prompt preview (reactive flow).
         await context.Send(
-            new MessageActivity("📋 Here is the information you requested - only you can see this, with prompt preview!")
+            new MessageActivity("👋 This is a **targeted message** with prompt preview - only YOU can see this!")
                 .WithRecipient(context.Activity.From, true),
             cancellationToken);
         
-        context.Log.Info("[PREVIEW] Sent targeted reply with auto-populated prompt preview");
+        context.Log.Info("[SEND] Sent targeted message with auto-populated prompt preview");
     }
     else if (text.Contains("help"))
     {
         await context.Send(
             "**🎯 Targeted Messages Demo**\n\n" +
             "**Commands:**\n" +
-            "- `send` - Send a targeted message (only you see it)\n" +
-            "- `update` - Send a message, then update it after 3 seconds\n" +
-            "- `delete` - Send a message, then delete it after 3 seconds\n" +
-            "- `reply` - Get a targeted reply (threaded)\n" +
-            "- `preview` - Reply with auto-populated prompt preview (reactive)\n" +
-            "- `preview-proactive` - Reply with manually attached prompt preview (proactive)\n\n" +
+            "- `send` - Send a targeted message with prompt preview (auto-populated)\n" +
+            "- `update` - Send a targeted message, then update it after 3 seconds\n" +
+            "- `delete` - Send a targeted message, then delete it after 3 seconds\n" +
+            "- `public` - Public message with prompt preview (visible to all)\n\n" +
             "_Targeted messages are only visible to you, even in group chats!_", cancellationToken);
     }
     else

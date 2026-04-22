@@ -1,5 +1,6 @@
 using System.Text.Json;
 
+using Microsoft.Teams.Api.Activities;
 using Microsoft.Teams.Api.Entities;
 
 namespace Microsoft.Teams.Api.Tests.Entities;
@@ -70,5 +71,41 @@ public class TargetedMessageInfoEntityTests
         var targeted = (TargetedMessageInfoEntity)entity;
         Assert.Equal("targetedMessageInfo", targeted.Type);
         Assert.Equal("1772129782775", targeted.MessageId);
+    }
+
+    [Fact]
+    public void AddTargetedMessageInfo_AddsEntity()
+    {
+        var activity = new MessageActivity("test");
+        activity.AddTargetedMessageInfo("12345");
+
+        var entity = activity.Entities?.OfType<TargetedMessageInfoEntity>().SingleOrDefault();
+        Assert.NotNull(entity);
+        Assert.Equal("12345", entity!.MessageId);
+    }
+
+    [Fact]
+    public void AddTargetedMessageInfo_DoesNotDuplicate_WhenConcreteEntityExists()
+    {
+        var activity = new MessageActivity("test")
+            .AddEntity(new TargetedMessageInfoEntity { MessageId = "9999" });
+
+        activity.AddTargetedMessageInfo("12345");
+
+        var entities = activity.Entities!.OfType<TargetedMessageInfoEntity>().ToList();
+        Assert.Single(entities);
+        Assert.Equal("9999", entities[0].MessageId);
+    }
+
+    [Fact]
+    public void AddTargetedMessageInfo_DoesNotDuplicate_WhenGenericEntityWithMatchingType()
+    {
+        var activity = new MessageActivity("test")
+            .AddEntity(new Entity("targetedMessageInfo"));
+
+        activity.AddTargetedMessageInfo("12345");
+
+        var entities = activity.Entities!.Where(e => e.Type == "targetedMessageInfo").ToList();
+        Assert.Single(entities);
     }
 }

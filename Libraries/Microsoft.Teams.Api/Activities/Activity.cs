@@ -383,6 +383,23 @@ public partial class Activity : IActivity
     }
 
     /// <summary>
+    /// add a targeted message info entity for prompt preview.
+    /// If an entity with type "targetedMessageInfo" already exists, it is not added again.
+    /// </summary>
+    /// <param name="messageId">the message ID of the targeted message</param>
+    [Experimental("ExperimentalTeamsTargeted")]
+    public virtual Activity AddTargetedMessageInfo(string messageId)
+    {
+        var hasEntity = Entities?.Any(e => e.Type == "targetedMessageInfo") ?? false;
+        if (!hasEntity)
+        {
+            AddEntity(new TargetedMessageInfoEntity { MessageId = messageId });
+        }
+
+        return this;
+    }
+
+    /// <summary>
     /// add a citation
     /// </summary>
     public virtual Activity AddCitation(int position, CitationAppearance appearance)

@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using Microsoft.Teams.Api.Activities;
-using Microsoft.Teams.Api.Entities;
 
 namespace Microsoft.Teams.Apps;
 
@@ -71,14 +70,9 @@ public partial class Context<TActivity> : IContext<TActivity>
         // Auto-populate targetedMessageInfo entity for prompt preview
         // when the incoming activity was a targeted message (reactive flow).
         #pragma warning disable ExperimentalTeamsTargeted
-        if (activity is MessageActivity && Activity.Recipient?.IsTargeted == true && Activity.Id is not null)
+        if (activity is MessageActivity messageActivity && Activity.Recipient?.IsTargeted == true && Activity.Id is not null)
         {
-            var hasEntity = activity.Entities?.Any(e => e is TargetedMessageInfoEntity) ?? false;
-            if (!hasEntity)
-            {
-                activity.Entities ??= [];
-                activity.Entities.Add(new TargetedMessageInfoEntity { MessageId = Activity.Id });
-            }
+            messageActivity.AddTargetedMessageInfo(Activity.Id);
         }
         #pragma warning restore ExperimentalTeamsTargeted
 
@@ -104,10 +98,19 @@ public partial class Context<TActivity> : IContext<TActivity>
 
         if (activity is MessageActivity message)
         {
-            message.Text = string.Join("\n", [
-                Activity.ToQuoteReply(),
-                message.Text != string.Empty ? $"<p>{message.Text}</p>" : string.Empty
-            ]);
+            // Skip quoted reply when incoming activity is targeted —
+            // prompt preview owns the preview surface for targeted messages.
+            #pragma warning disable ExperimentalTeamsTargeted
+            var isTargeted = Activity.Recipient?.IsTargeted == true && Activity.Id is not null;
+            #pragma warning restore ExperimentalTeamsTargeted
+
+            if (!isTargeted)
+            {
+                message.Text = string.Join("\n", [
+                    Activity.ToQuoteReply(),
+                    message.Text != string.Empty ? $"<p>{message.Text}</p>" : string.Empty
+                ]);
+            }
         }
 
         return Send(activity, cancellationToken);
