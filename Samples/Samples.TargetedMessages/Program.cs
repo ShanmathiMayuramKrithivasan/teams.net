@@ -95,34 +95,32 @@ teams.OnMessage(async (context, cancellationToken) =>
     }
     else if (text.Contains("public"))
     {
-        // PUBLIC: Send a public message with prompt preview.
-        // Everyone in the chat sees the reply with a collapsible preview of the original prompt.
+        // PUBLIC: Send a public message visible to everyone in the chat.
         await context.Send(
-            new MessageActivity("📋 Here is the public result - everyone can see this, with prompt preview!"),
+            new MessageActivity("📋 Here is the public result — everyone can see this!"),
             cancellationToken);
         
-        context.Log.Info("[PUBLIC] Sent public message with prompt preview");
+        context.Log.Info("[PUBLIC] Sent public message");
     }
     else if (text.Contains("send"))
     {
-        // SEND: Send a targeted message to the user. The SDK auto-populates
-        // the targetedMessageInfo entity for prompt preview (reactive flow).
+        // SEND: Send a targeted message visible only to the sender.
         await context.Send(
-            new MessageActivity("👋 This is a **targeted message** with prompt preview - only YOU can see this!")
+            new MessageActivity("👋 This is a **targeted message** — only YOU can see this!")
                 .WithRecipient(context.Activity.From, true),
             cancellationToken);
         
-        context.Log.Info("[SEND] Sent targeted message with auto-populated prompt preview");
+        context.Log.Info("[SEND] Sent targeted message");
     }
     else if (text.Contains("help"))
     {
         await context.Send(
             "**🎯 Targeted Messages Demo**\n\n" +
             "**Commands:**\n" +
-            "- `send` - Send a targeted message with prompt preview (auto-populated)\n" +
+            "- `send` - Send a targeted message (only visible to you)\n" +
             "- `update` - Send a targeted message, then update it after 3 seconds\n" +
             "- `delete` - Send a targeted message, then delete it after 3 seconds\n" +
-            "- `public` - Public message with prompt preview (visible to all)\n\n" +
+            "- `public` - Send a public reply (visible to all)\n\n" +
             "_Targeted messages are only visible to you, even in group chats!_", cancellationToken);
     }
     else
